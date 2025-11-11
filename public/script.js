@@ -5,8 +5,16 @@ let conversationHistory = [];
 let recognition;
 let synthesis = window.speechSynthesis;
 let isLLMSpeaking = false;
-let isUserSpeaking = false;
+let isUserSpeaking = false; // Flag controls both UI and flow
 let currentTranscript = '';
+let languageCode = 'zh-CN';
+let selectedLanguageName = 'Chinese';
+let possibleLanguages = {
+    Chinese: 'zh-CN',
+    Japanese: 'ja-JP',
+    Spanish: 'es-ES',
+    English: 'en-US'
+}
 // let API_KEY = '';
 
 // PAGE NAVIGATION
@@ -22,11 +30,9 @@ function goToStartPage() {
     const wordsInput = document.getElementById("chars_input").value.trim();
     const examDescInput = document.getElementById("exam_desc_input").value.trim();
 
-    // If text boxes are not all filled in, alert the user
-    if (!wordsInput || !examDescInput) {
-        alert('Please fill in all fields before submitting.');
-        return;
-    }
+    const languageSelect = document.getElementById('language_select');
+    selectedLanguageName = languageSelect.value;
+    languageCode = possibleLanguages[selectedLanguageName];
 
     // Parse words/grammar structures and assign to global variables
     requiredWords = wordsInput.split('\n').filter(w => w.trim() !== '');
@@ -37,6 +43,39 @@ function goToStartPage() {
     document.getElementById("exam_desc_label").textContent = examDescription;
 
     showPage('start-page');
+}
+
+// POPULATE LANGUAGE CHOOSER
+function populateLanguageDropdown() {
+    const select = document.getElementById('language_select');
+
+    // Clear existing options (in case of restart/re-init)
+    select.innerHTML = '';
+
+    for (const name in possibleLanguages) {
+        const option = document.createElement('option');
+        option.value = name; // e.g., 'Chinese'
+        option.textContent = name;
+        
+        // Make Chinese the default selection
+        if (name === 'Chinese') {
+            option.selected = true;
+            // Also ensure the global variables are set to the default
+            selectedLanguageName = 'Chinese';
+            languageCode = possibleLanguages[name];
+        }
+        
+        select.appendChild(option);
+    }
+
+    // Add an event listener to update global variables on change
+    select.addEventListener('change', function() {
+        selectedLanguageName = this.value;
+        languageCode = possibleLanguages[selectedLanguageName];
+        
+        // This log helps confirm the change
+        console.log(`Language changed to: ${selectedLanguageName} (${languageCode})`);
+    });
 }
 
 // PAGE 2: START PAGE -> CONVERSATION PAGE
@@ -61,6 +100,13 @@ function goToConversationPage() {
     }
 }
 
+// CONVERSATION PAGE -> LANDING PAGE
+function goToLandingPage() {
+    document.getElementById("chars_input").value = '';
+    document.getElementById("exam_desc_input").value = '';
+    showPage('landing-page');
+}
+
 // SPEECH RECOGNITION SETUP
 function initializeSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -72,7 +118,7 @@ function initializeSpeechRecognition() {
 
     // Set up speech recognition
     recognition = new SpeechRecognition();
-    recognition.lang = 'zh-CN'; // Chinese language
+    recognition.lang = languageCode;
     recognition.continuous = true;
     recognition.interimResults = true;
 
@@ -80,24 +126,64 @@ function initializeSpeechRecognition() {
     recognition.onresult = function(event) {
         let interimTranscript = '';
         let finalTranscript = '';
-
+        
+        // Iterate from event.resultIndex (the index of the first new result) 
+        // to process only the latest segments.
         for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
+            
             if (event.results[i].isFinal) {
+                // If it's a final result, append it to the session's overall transcript
+                // and update the global currentTranscript.
                 finalTranscript += transcript;
             } else {
+                // If it's an interim result, collect it to show the user
                 interimTranscript += transcript;
             }
         }
-
-        currentTranscript = finalTranscript || interimTranscript;
-        document.getElementById('status-text').textContent = 'You: ' + currentTranscript;
+        currentTranscript += finalTranscript; 
+        document.getElementById('status-text').textContent = 'You: ' + (currentTranscript + interimTranscript);
     };
 
-    // Speech recognition does not work
     recognition.onerror = function(event) {
         console.error('Speech recognition error:', event.error);
-        document.getElementById('status-text').textContent = 'Error: ' + event.error;
+        document.getElementById('status-text').textContent = 'Error: ' + event.error + '. Restarting listener...';
+        
+        // The error stops the recognition implicitly. Set flag to false and show icon.
+        isUserSpeaking = false; 
+        showMicrophoneIcon();
+
+        // Automatically restart listening after an error (except fatal ones like 'not-allowed')
+        if (event.error !== 'not-allowed' && event.error !== 'service-not-allowed') {
+            setTimeout(startListening, 1000); // Wait a second before trying again
+        }
+    };
+    
+    // THE CRITICAL FIX: The 'end' event fires when the speech recognition service has disconnected.
+    // We run the processing logic here to ensure the service is fully stopped before proceeding.
+    recognition.onend = function() {
+        if (isUserSpeaking) {
+            // This code runs after recognition.stop() or a timeout.
+            isUserSpeaking = false; 
+            showMicrophoneIcon();
+
+            // Check the accumulated transcript
+            if (currentTranscript.trim()) {
+                conversationHistory.push({ speaker: 'User', text: currentTranscript });
+                document.getElementById('status-text').textContent = 'Processing: ' + currentTranscript;
+
+                // Send user's response to LLM
+                // llmSpeak will call startListening() in its onend handler after TTS finishes
+                llmSpeak(currentTranscript);
+            } else {
+                // No speech detected. Tell user and start listening again.
+                console.log("Recognition ended with no transcript. Restarting listener...");
+                document.getElementById('status-text').textContent = 'No speech detected. Please try again.';
+                
+                // Wait briefly before restarting the mic to avoid race conditions
+                setTimeout(startListening, 500); 
+            }
+        }
     };
 }
 
@@ -130,23 +216,23 @@ function llmSpeak(prompt) {
         });
 }
 
-// SPEAKING CHINESE TEXT
+// SPEAKING TEXT
 function speakText(text) {
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'zh-CN';
-    utterance.rate = 0.8; 
-    utterance.pitch = 1.0;  
-    utterance.volume = 1.0; 
+    utterance.lang = languageCode;
+    utterance.rate = 0.8; 
+    utterance.pitch = 1.0;  
+    utterance.volume = 1.0; 
 
-    // Select a higher quality voice if available
+    // Select highest quality voice based on the language
     const voices = synthesis.getVoices();
-    const chineseVoice = voices.find(voice =>
-        voice.lang.startsWith('zh') &&
+    const selectedVoice = voices.find(voice =>
+        voice.lang.startsWith(languageCode.substring(0, 2)) &&
         (voice.name.includes('Premium') || voice.name.includes('Enhanced') || voice.localService === false)
-    ) || voices.find(voice => voice.lang.startsWith('zh'));
+    ) || voices.find(voice => voice.lang.startsWith(languageCode.substring(0, 2)));
 
-    if (chineseVoice) {
-        utterance.voice = chineseVoice;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
     }
 
     utterance.onend = function() {
@@ -160,11 +246,24 @@ function speakText(text) {
 
 // LISTEN TO THE USER
 function startListening() {
+    // We only start if recognition exists and the user is NOT currently speaking
     if (recognition && !isUserSpeaking) {
         isUserSpeaking = true;
-        currentTranscript = '';
-        document.getElementById('status-text').textContent = 'Your turn to speak...';
-        recognition.start();
+        currentTranscript = ''; // Important: reset transcript for the new turn
+        
+        // Reset the visual display when listening starts
+        document.getElementById('status-text').textContent = 'Your turn to speak...'; 
+
+        // Add a try-catch in case recognition.start() fails after an error
+        try {
+            recognition.start();
+        } catch (e) {
+            // Often catches "Failed to execute 'start' on 'SpeechRecognition': recognition has already started" 
+            // but in a correctly implemented flow, this means recognition failed to fully stop or an error occurred.
+            console.error("Error starting recognition:", e);
+            document.getElementById('status-text').textContent = 'Error starting mic. Please try reloading.';
+            isUserSpeaking = false;
+        }
     }
 }
 
@@ -172,18 +271,11 @@ function startListening() {
 // Function is called in index.html when "end message" button is pressed
 function endMessage() {
     if (isUserSpeaking && recognition) {
+        // Stop recognition. This will trigger the final 'onresult' and then the 'onend' event.
+        // The processing logic is now in recognition.onend.
         recognition.stop();
-        isUserSpeaking = false;
-
-        if (currentTranscript.trim()) {
-            conversationHistory.push({ speaker: 'User', text: currentTranscript });
-
-            // Send user's response to LLM
-            llmSpeak(currentTranscript);
-        } else {
-            document.getElementById('status-text').textContent = 'No speech detected. Please try again.';
-            showMicrophoneIcon();
-        }
+        // Do NOT set isUserSpeaking to false here. Let onend handle the state change.
+        document.getElementById('status-text').textContent = 'Stopping recording...';
     }
 }
 
@@ -248,7 +340,7 @@ function generateScoreReport() {
 
 // GENERATE GRAMMAR FEEDBACK
 function generateGrammarFeedback(userText) {
-    const feedbackPrompt = `As a Chinese language teacher, analyze the following dialogue, which represents a student's responses in a conversation. Provide constructive grammar feedback in English in a short paragraph. Focus on grammar mistakes, sentence structure, and areas for improvement. Please format your response in plaintext and do not use any markdown formatting. Address your response to the student. \n\n${userText}`;
+    const feedbackPrompt = `As a ${selectedLanguageName} language teacher, analyze the following dialogue, which represents a student's responses in a conversation. Provide constructive grammar feedback in English in a short paragraph. Focus on grammar mistakes, sentence structure, and areas for improvement. Please format your response in plaintext and do not use any markdown formatting. Address your response to the student. \n\n${userText}`;
 
     callLLMAPI(feedbackPrompt)
         .then(feedback => {
@@ -270,7 +362,7 @@ async function callLLMAPI(prompt) {
             }]
         }
     ];
-    let SYSTEM_INSTRUCTION = `You are a Chinese language teacher helping a student practice Chinese conversation. The conversation description is as follows: "${examDescription}". The student needs to use these words and grammar structures: ${requiredWords.join(', ')}. Converse naturally in Chinese, always following the description of the conversation. While conversing, subtly encourage the student to use the required vocabulary, but try not to explicit mention the vocabulary words or the conversation topic. Keep your responses between 1-3 sentences. Please format your response in plaintext and do not use any markdown formatting.`;
+    let SYSTEM_INSTRUCTION = `You are a ${selectedLanguageName} language teacher helping a student practice ${selectedLanguageName} conversation. The conversation description is as follows: "${examDescription}". The student needs to use these words and grammar structures: ${requiredWords.join(', ')}. Converse naturally in ${selectedLanguageName}, always following the description of the conversation. While conversing, subtly encourage the student to use the required vocabulary, but try not to explicit mention the vocabulary words or the conversation topic. Keep your responses between 1-3 sentences. Please format your response in plaintext and do not use any markdown formatting.`;
 
     if (prompt !== undefined) {
         // Add conversation history
@@ -299,7 +391,7 @@ async function callLLMAPI(prompt) {
         },
         body: JSON.stringify({
             contents: contents,
-            systemInstruction: 
+            systemInstruction: 
             {
                 "parts": [
                     {"text": SYSTEM_INSTRUCTION}
@@ -320,4 +412,5 @@ function printReport() {
 // Initialize: Show landing page on load
 window.onload = function() {
     showPage('landing-page');
+    populateLanguageDropdown();
 };
