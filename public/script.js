@@ -15,6 +15,13 @@ let possibleLanguages = {
     Spanish: 'es-ES',
     English: 'en-US'
 }
+let levelDescriptions = {
+    Novice: 'I can communicate in spontaneous spoken, written, or signed conversations on both very familiar and everyday topics, using a variety of practiced or memorized words, phrases, simple sentences, and questions.',
+    Intermediate: 'I can participate in spontaneous spoken, written, or signed conversations on familiar topics, creating sentences and series of sentences to ask and answer a variety of questions.',
+    Advanced: 'I can maintain spontaneous spoken, written, or signed conversations and discussions across various time frames on familiar, as well as unfamiliar, concrete topics, using series of connected sentences and probing questions.',
+    Superior: 'I can participate fully and effectively in spontaneous spoken, written, or signed discussions and debates on issues and ideas ranging from broad general interests to my areas of specialized expertise, including supporting arguments and exploring hypotheses',
+    Distinguished: 'I can interact, negotiate, and debate on a wide range of global issues and highly abstract concepts, fully adapting to the cultural context of the conversation, using spoken, written, or signed language.'
+}
 // let API_KEY = '';
 
 // PAGE NAVIGATION
@@ -33,6 +40,10 @@ function goToStartPage() {
     const languageSelect = document.getElementById('language_select');
     selectedLanguageName = languageSelect.value;
     languageCode = possibleLanguages[selectedLanguageName];
+
+    const levelSelect = document.getElementById('level_select');
+    selectedLevel = levelSelect.value;
+    levelDesc = levelDescriptions[selectedLevel];
 
     // Parse words/grammar structures and assign to global variables
     requiredWords = wordsInput.split('\n').filter(w => w.trim() !== '');
@@ -70,11 +81,44 @@ function populateLanguageDropdown() {
 
     // Add an event listener to update global variables on change
     select.addEventListener('change', function() {
-        selectedLanguageName = this.value;
+        selectedLevel = this.value;
         languageCode = possibleLanguages[selectedLanguageName];
         
         // This log helps confirm the change
         console.log(`Language changed to: ${selectedLanguageName} (${languageCode})`);
+    });
+}
+
+// POPULATE LEVEL CHOOSER
+function populateLevelDropdown() {
+    const select = document.getElementById('level_select');
+
+    // Clear existing options (in case of restart/re-init)
+    select.innerHTML = '';
+
+    for (const name in levelDescriptions) {
+        const option = document.createElement('option');
+        option.value = name; // e.g., 'Chinese'
+        option.textContent = name;
+        
+        // Make Chinese the default selection
+        if (name === 'Novice') {
+            option.selected = true;
+            // Also ensure the global variables are set to the default
+            selectedLevel = 'Novice';
+            levelDesc = levelDescriptions[selectedLevel];
+        }
+        
+        select.appendChild(option);
+    }
+
+    // Add an event listener to update global variables on change
+    select.addEventListener('change', function() {
+        selectedLanguageName = this.value;
+        levelDesc = levelDescriptions[selectedLevel];
+        
+        // This log helps confirm the change
+        console.log(`Level changed to: ${selectedLevel} (${levelDesc})`);
     });
 }
 
@@ -362,7 +406,7 @@ async function callLLMAPI(prompt) {
             }]
         }
     ];
-    let SYSTEM_INSTRUCTION = `You are a ${selectedLanguageName} language teacher helping a student practice ${selectedLanguageName} conversation. The conversation description is as follows: "${examDescription}". The student needs to use these words and grammar structures: ${requiredWords.join(', ')}. Converse naturally in ${selectedLanguageName}, always following the description of the conversation. While conversing, subtly encourage the student to use the required vocabulary, but try not to explicit mention the vocabulary words or the conversation topic. Keep your responses between 1-3 sentences. Please format your response in plaintext and do not use any markdown formatting.`;
+    let SYSTEM_INSTRUCTION = `You are a ${selectedLanguageName} language teacher helping a student practice ${selectedLanguageName} conversation. The conversation description is as follows: "${examDescription}". The student needs to use these words and grammar structures: ${requiredWords.join(', ')}. Converse naturally in ${selectedLanguageName}, always following the description of the conversation. While conversing, subtly encourage the student to use the required vocabulary, but try not to explicit mention the vocabulary words or the conversation topic. Keep your responses between 1-3 sentences. Please format your response in plaintext and do not use any markdown formatting. Craft your responses to the following ACTFL ${selectedLevel} Interpersonal standard: \n\n${levelDesc}`;
 
     if (prompt !== undefined) {
         // Add conversation history
@@ -413,4 +457,5 @@ function printReport() {
 window.onload = function() {
     showPage('landing-page');
     populateLanguageDropdown();
+    populateLevelDropdown();
 };
