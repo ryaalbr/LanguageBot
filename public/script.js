@@ -213,12 +213,25 @@ function initializeSpeechRecognition() {
 
             // Check the accumulated transcript
             if (currentTranscript.trim()) {
-                conversationHistory.push({ speaker: 'User', text: currentTranscript });
-                document.getElementById('status-text').textContent = 'Processing: ' + currentTranscript;
+                document.getElementById('status-text').textContent = 'Adding punctuation...';
 
-                // Send user's response to LLM
-                // llmSpeak will call startListening() in its onend handler after TTS finishes
-                llmSpeak(currentTranscript);
+                // Add punctuation using AI before continuing
+                addPunctuation(currentTranscript)
+                    .then(punctuatedText => {
+                        conversationHistory.push({ speaker: 'User', text: punctuatedText });
+                        document.getElementById('status-text').textContent = 'Processing: ' + punctuatedText;
+
+                        // Send user's response to LLM
+                        // llmSpeak will call startListening() in its onend handler after TTS finishes
+                        llmSpeak(punctuatedText);
+                    })
+                    .catch(error => {
+                        console.error('Punctuation error, using original text:', error);
+                        // Fall back to original text if punctuation fails
+                        conversationHistory.push({ speaker: 'User', text: currentTranscript });
+                        document.getElementById('status-text').textContent = 'Processing: ' + currentTranscript;
+                        llmSpeak(currentTranscript);
+                    });
             } else {
                 // No speech detected. Tell user and start listening again.
                 console.log("Recognition ended with no transcript. Restarting listener...");
@@ -394,6 +407,29 @@ function generateGrammarFeedback(userText) {
             console.error('Error generating feedback:', error);
             document.getElementById('grammar-feedback').textContent = 'Unable to generate feedback at this time.';
         });
+}
+
+// ADD PUNCTUATION TO TRANSCRIPT
+async function addPunctuation(text) {
+    const punctuationPrompt = `Add proper punctuation to the following ${selectedLanguageName} text. Return ONLY the punctuated text without any explanations or additional formatting:\n\n${text}`;
+
+    const response = await fetch(`/api/v1beta/models/gemini-2.5-flash-lite:generateContent`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contents: [{
+                role: 'user',
+                parts: [{
+                    text: punctuationPrompt
+                }]
+            }]
+        })
+    });
+
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text.trim();
 }
 
 // LLM API INTEGRATION
