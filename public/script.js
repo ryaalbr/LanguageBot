@@ -22,7 +22,12 @@ let levelDescriptions = {
     Superior: 'I can participate fully and effectively in spontaneous spoken, written, or signed discussions and debates on issues and ideas ranging from broad general interests to my areas of specialized expertise, including supporting arguments and exploring hypotheses',
     Distinguished: 'I can interact, negotiate, and debate on a wide range of global issues and highly abstract concepts, fully adapting to the cultural context of the conversation, using spoken, written, or signed language.'
 }
-// let API_KEY = '';
+
+//console.log(decodeURIComponent(document.cookie));
+//console.log(getCookie("apiKey"));
+//const apiKeyInputField = document.getElementById("api_key");
+//const apiKey = getCookie("apiKey");
+//apiKeyInputField.value = apiKey;
 
 // PAGE NAVIGATION
 function showPage(pageId) {
@@ -31,9 +36,46 @@ function showPage(pageId) {
     document.getElementById(pageId).style.display = 'block';
 }
 
+function changeAPIKeyVisibility() {
+    var x = document.getElementById("api_key");
+    var y = document.getElementById("api_key_button");
+
+    if (x.style.display === "none") {
+        x.style.display = "inline";
+    } else {
+        x.style.display = "none";
+    }
+    
+    if (y.textContent === "Hide") {
+        y.textContent = "Show";
+    } else {
+        y.textContent = "Hide";
+    }
+}
+
+function getCookie(cname) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for(let i = 0; i <ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
 // PAGE 1: LANDING PAGE -> START PAGE
 function goToStartPage() {
     // Get values from landing page
+    apiKey = document.getElementById("api_key").value.trim();
+    document.cookie = "apiKey="+apiKey+";";
+    //process.env.GEMINI_API_KEY = apiKey;
+
     const wordsInput = document.getElementById("chars_input").value.trim();
     const examDescInput = document.getElementById("exam_desc_input").value.trim();
 
@@ -416,7 +458,8 @@ async function addPunctuation(text) {
     const response = await fetch(`/api/v1beta/models/gemini-2.5-flash-lite:generateContent`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
         },
         body: JSON.stringify({
             contents: [{
@@ -429,6 +472,7 @@ async function addPunctuation(text) {
     });
 
     const data = await response.json();
+    console.log(data.candidates[0].content.parts[0].text.trim());
     return data.candidates[0].content.parts[0].text.trim();
 }
 
@@ -467,7 +511,8 @@ async function callLLMAPI(prompt) {
     const response = await fetch(`/api/v1beta/models/gemini-2.5-flash-lite:generateContent`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
         },
         body: JSON.stringify({
             contents: contents,
@@ -494,4 +539,6 @@ window.onload = function() {
     showPage('landing-page');
     populateLanguageDropdown();
     populateLevelDropdown();
+    document.getElementById("api_key").value = getCookie("apiKey");
+    document.getElementById("api_key").style.display = "none";
 };

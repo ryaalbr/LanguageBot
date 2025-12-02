@@ -33,7 +33,7 @@ app.post('/api/*splat', async (req, res) => {
 
         // Copy incoming headers
         const headers = {...req.headers};
-        headers['x-goog-api-key'] = `${API_KEY}`;
+        //headers['x-goog-api-key'] = `${API_KEY}`;
         delete headers.host;
 
         // Make request to third-party API

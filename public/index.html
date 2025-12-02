@@ -12,12 +12,18 @@
         <div id="landing-page" class="page">
             <h1>Welcome to LanguageBot</h1>
 
+            <label for="api_key">Insert API Key (Get one at <a href="https://aistudio.google.com/u/1/api-keys" target="_blank">Google AI Studio</a>):</label>
+            <br>
+            <button id="api_key_button" onclick="changeAPIKeyVisibility()">Show</button>
+            <br>
+            <input type="text" id="api_key" placeholder="Insert your API key here">
+            <br><br>
             <label for="language_select">Select Language:</label>
             <br>
             <select id="language_select">
                 </select>
             <br><br>
-            <label for="level_select">Select Language:</label>
+            <label for="level_select">Select Level:</label>
             <br>
             <select id="level_select">
                 </select>
@@ -96,6 +102,8 @@
 
             <button id="Restart" onclick="goToLandingPage()">Restart</button>
         </div>
+
+        <p id="feedback">Give <a href="https://forms.gle/jf2LM1patpsZTmn5A">feedback</a> about LanguageBot</p>
 
     </body>
 </html>
