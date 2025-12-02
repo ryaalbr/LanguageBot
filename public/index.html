@@ -6,46 +6,68 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
+        <script src="config.js"></script>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
         <script src="script.js"></script>
 
         <!-- PAGE 1: LANDING PAGE -->
         <div id="landing-page" class="page">
             <h1>Welcome to LanguageBot</h1>
+            <p>Practice language conversations with an AI tutor</p>
+            <div id="g_id_onload"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard"></div>
+        </div>
+
+        <!-- PAGE 2: INPUT PAGE -->
+        <div id="input-page" class="page">
+            <h1>Welcome to LanguageBot</h1>
+
+            <button id="logout-btn" onclick="logout()">Log Out</button>
+            <br><br>
+
+            <label for="api_key_input">Gemini API Key (get one <a target="_blank" href="https://aistudio.google.com/api-keys">here</a>):</label>
+            <br>
+            <input type="text" id="api_key_input" placeholder="Enter your Gemini API key">
+            <br><br>
+
+            <label for="chars_input">Words and phrases (separated by line breaks):</label>
+            <br>
+            <textarea id="chars_input" cols="40" rows="5" placeholder="Enter vocabulary, one per line"></textarea>
+            <br><br>
+
+            <label for="exam_desc_input">Description of the conversation:</label>
+            <br>
+            <textarea id="exam_desc_input" cols="40" rows="5" placeholder="Describe the conversation"></textarea>
+            <br><br>
 
             <label for="language_select">Select Language:</label>
             <br>
             <select id="language_select">
-                </select>
-            <br><br>
-            <label for="level_select">Select Language:</label>
-            <br>
-            <select id="level_select">
-                </select>
-            <br><br>
-            <label for="chars_input">Words, phrases, and grammar structures (separated by line breaks):</label>
-            <br>
-            <textarea id="chars_input" cols="40" rows="5" placeholder="Enter vocabulary and grammar structures, one per line"></textarea>
+            </select>
             <br><br>
 
-            <label for="exam_desc_input">Conversation description:</label>
+            <label for="level_select">Select Level:</label>
             <br>
-            <textarea id="exam_desc_input" cols="40" rows="5" placeholder="Describe the conversation"></textarea>
+            <select id="level_select">
+            </select>
             <br><br>
 
             <button id="submit" onclick="goToStartPage()">Submit</button>
         </div>
 
-        <!-- PAGE 2: START PAGE -->
+        <!-- PAGE 3: START PAGE -->
         <div id="start-page" class="page">
             <h1>Exam Ready</h1>
 
-            <p id="instructions">When you start the exam, you will see a speaker icon, which means that the chatbot is speaking. Listen to the chatbot's voice. Once the chatbot is done speaking, a microphone icon will appear, meaning that you will speak. Respond to the chatbot in Chinese. When you have finished responding, press the "End Message" button. You and the chatbot will continue talking until you press the "End Conversation" button. Make sure to follow the instructions of the exam and use all the required vocabulary.</p>
+            <p id="instructions">When you start the conversation, you will see a speaker icon, which means that the chatbot is speaking. Listen to the chatbot's voice. Once the chatbot is done speaking, a microphone icon will appear, meaning that you will speak. Respond to the chatbot in Chinese. When you have finished responding, press the "End Message" button. You and the chatbot will continue talking until you press the "End Conversation" button. Make sure to follow the instructions of the conversation and use all the required vocabulary.</p>
             <br>
 
             <div id="exam-info">
                 <p><strong>Words & Grammar Structures:</strong></p>
                 <p id="chars_label"></p>
-                <p><strong>Exam Description:</strong></p>
+                <p><strong>Conversation Description:</strong></p>
                 <p id="exam_desc_label"></p>
             </div>
             <br>
@@ -53,7 +75,7 @@
             <button id="start-conversation-btn" onclick="goToConversationPage()">Start Conversation</button>
         </div>
 
-        <!-- PAGE 3: CONVERSATION PAGE -->
+        <!-- PAGE 4: CONVERSATION PAGE -->
         <div id="conversation-page" class="page">
             <h1>Conversation in Progress</h1>
 
@@ -74,7 +96,7 @@
             <button id="end-conversation-btn" onclick="endConversation()">End Conversation</button>
         </div>
 
-        <!-- PAGE 4: POST-CONVERSATION PAGE -->
+        <!-- PAGE 5: POST-CONVERSATION PAGE -->
         <div id="post-conversation-page" class="page">
             <h1>Score Report</h1>
 

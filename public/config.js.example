@@ -1,0 +1,5 @@
+// Copy this file to config.js and replace with your actual Google Client ID
+// Get your Client ID from: https://console.cloud.google.com/
+window.APP_CONFIG = {
+  GOOGLE_CLIENT_ID: 'your_google_client_id_here'
+};

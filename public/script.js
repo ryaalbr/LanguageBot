@@ -5,7 +5,7 @@ let conversationHistory = [];
 let recognition;
 let synthesis = window.speechSynthesis;
 let isLLMSpeaking = false;
-let isUserSpeaking = false; // Flag controls both UI and flow
+let isUserSpeaking = false;
 let currentTranscript = '';
 let languageCode = 'zh-CN';
 let selectedLanguageName = 'Chinese';
@@ -22,7 +22,7 @@ let levelDescriptions = {
     Superior: 'I can participate fully and effectively in spontaneous spoken, written, or signed discussions and debates on issues and ideas ranging from broad general interests to my areas of specialized expertise, including supporting arguments and exploring hypotheses',
     Distinguished: 'I can interact, negotiate, and debate on a wide range of global issues and highly abstract concepts, fully adapting to the cultural context of the conversation, using spoken, written, or signed language.'
 }
-// let API_KEY = '';
+let isSignedIn = false;
 
 // PAGE NAVIGATION
 function showPage(pageId) {
@@ -31,9 +31,87 @@ function showPage(pageId) {
     document.getElementById(pageId).style.display = 'block';
 }
 
-// PAGE 1: LANDING PAGE -> START PAGE
-function goToStartPage() {
-    // Get values from landing page
+// GOOGLE SIGN-IN HANDLER
+async function handleCredentialResponse(response) {
+    try {
+        const result = await fetch('/auth/google', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ credential: response.credential })
+        });
+
+        const data = await result.json();
+
+        if (data.success) {
+            isSignedIn = true;
+            showPage('input-page');
+            await checkForSavedApiKey();
+        } else {
+            alert('Authentication failed. Please try again.');
+        }
+    } catch (error) {
+        console.error('Authentication error:', error);
+        alert('Authentication failed. Please try again.');
+    }
+}
+
+// CHECK FOR SAVED API KEY
+async function checkForSavedApiKey() {
+    try {
+        const response = await fetch('/api/user/api-key');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.hasApiKey) {
+                document.getElementById('api_key_input').placeholder = 'Enter API key';
+            }
+        }
+    } catch (error) {
+        console.error('Error checking for API key:', error);
+    }
+}
+
+// LOGOUT FUNCTION
+async function logout() {
+    try {
+        await fetch('/auth/logout', { method: 'POST' });
+        isSignedIn = false;
+        google.accounts.id.disableAutoSelect();
+        showPage('landing-page');
+    } catch (error) {
+        console.error('Logout error:', error);
+        isSignedIn = false;
+        showPage('landing-page');
+    }
+}
+
+// PAGE 2: INPUT PAGE -> START PAGE
+async function goToStartPage() {
+    // Get API key and save to backend
+    const apiKeyInput = document.getElementById("api_key_input").value.trim();
+    if (apiKeyInput) {
+        try {
+            const response = await fetch('/api/user/api-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ apiKey: apiKeyInput })
+            });
+
+            if (!response.ok) {
+                alert('Failed to save API key. Please try again.');
+                return;
+            }
+        } catch (error) {
+            console.error('Error saving API key:', error);
+            alert('Failed to save API key. Please try again.');
+            return;
+        }
+    }
+
+    // Get values from input page
     const wordsInput = document.getElementById("chars_input").value.trim();
     const examDescInput = document.getElementById("exam_desc_input").value.trim();
 
@@ -122,7 +200,7 @@ function populateLevelDropdown() {
     });
 }
 
-// PAGE 2: START PAGE -> CONVERSATION PAGE
+// PAGE 3: START PAGE -> CONVERSATION PAGE
 function goToConversationPage() {
     // Request microphone permission
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -144,11 +222,19 @@ function goToConversationPage() {
     }
 }
 
-// CONVERSATION PAGE -> LANDING PAGE
-function goToLandingPage() {
+// POST-CONVERSATION PAGE -> INPUT PAGE
+async function goToLandingPage() {
+    if (isSignedIn) {
+        showPage('input-page');
+    } else {
+        showPage('landing-page');
+    }
+}
+
+// CLEAR INPUT FIELDS
+function clearInputFields() {
     document.getElementById("chars_input").value = '';
     document.getElementById("exam_desc_input").value = '';
-    showPage('landing-page');
 }
 
 // SPEECH RECOGNITION SETUP
@@ -338,10 +424,16 @@ function endMessage() {
 
 // END CONVERSATION
 function endConversation() {
+    // Stop speech recognition if active
     if (recognition) {
+        // Prevent the onend handler from processing any partial transcript
+        isUserSpeaking = false;
         recognition.stop();
     }
+    // Cancel any ongoing speech synthesis
     synthesis.cancel();
+    // Reset LLM speaking flag
+    isLLMSpeaking = false;
 
     showPage('post-conversation-page');
     generateScoreReport();
@@ -358,7 +450,7 @@ function showMicrophoneIcon() {
     document.getElementById('microphone-icon').style.display = 'block';
 }
 
-// PAGE 4: SCORE REPORT
+// PAGE 5: SCORE REPORT
 function generateScoreReport() {
     // Display transcript
     const transcriptDiv = document.getElementById('transcript');
@@ -413,7 +505,7 @@ function generateGrammarFeedback(userText) {
 async function addPunctuation(text) {
     const punctuationPrompt = `Add proper punctuation to the following ${selectedLanguageName} text. Return ONLY the punctuated text without any explanations or additional formatting:\n\n${text}`;
 
-    const response = await fetch(`/api/v1beta/models/gemini-2.5-flash-lite:generateContent`, {
+    const response = await fetch(`/api/gemini/v1beta/models/gemini-2.5-flash-lite:generateContent`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -464,7 +556,7 @@ async function callLLMAPI(prompt) {
         });
     }
 
-    const response = await fetch(`/api/v1beta/models/gemini-2.5-flash-lite:generateContent`, {
+    const response = await fetch(`/api/gemini/v1beta/models/gemini-2.5-flash-lite:generateContent`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -489,9 +581,37 @@ function printReport() {
     window.print();
 }
 
-// Initialize: Show landing page on load
-window.onload = function() {
-    showPage('landing-page');
+// Initialize: Check if user is already signed in
+window.onload = async function() {
     populateLanguageDropdown();
     populateLevelDropdown();
+
+    // Initialize Google Sign-In with client ID from config
+    if (window.APP_CONFIG && window.APP_CONFIG.GOOGLE_CLIENT_ID) {
+        google.accounts.id.initialize({
+            client_id: window.APP_CONFIG.GOOGLE_CLIENT_ID,
+            callback: handleCredentialResponse
+        });
+        google.accounts.id.renderButton(
+            document.querySelector('.g_id_signin'),
+            { theme: 'outline', size: 'large' }
+        );
+    }
+
+    // Check authentication status
+    try {
+        const response = await fetch('/auth/status');
+        const data = await response.json();
+
+        if (data.authenticated) {
+            isSignedIn = true;
+            showPage('input-page');
+            await checkForSavedApiKey();
+        } else {
+            showPage('landing-page');
+        }
+    } catch (error) {
+        console.error('Error checking auth status:', error);
+        showPage('landing-page');
+    }
 };

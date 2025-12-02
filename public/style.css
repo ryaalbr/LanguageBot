@@ -59,6 +59,26 @@ label {
 /* Landing Page */
 #landing-page {
     display: block;
+    text-align: center;
+}
+
+#landing-page .g_id_signin {
+    display: inline-block;
+    margin-top: 20px;
+}
+
+/* Input Page */
+#input-page {
+    display: none;
+}
+
+#logout-btn {
+    background-color: #f44336;
+    margin-bottom: 20px;
+}
+
+#logout-btn:hover {
+    background-color: #da190b;
 }
 
 /* Start Page */
