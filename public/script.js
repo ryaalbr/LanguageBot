@@ -23,36 +23,7 @@ let levelDescriptions = {
     Distinguished: 'I can interact, negotiate, and debate on a wide range of global issues and highly abstract concepts, fully adapting to the cultural context of the conversation, using spoken, written, or signed language.'
 }
 
-//console.log(decodeURIComponent(document.cookie));
-//console.log(getCookie("apiKey"));
-//const apiKeyInputField = document.getElementById("api_key");
-//const apiKey = getCookie("apiKey");
-//apiKeyInputField.value = apiKey;
-
-// PAGE NAVIGATION
-function showPage(pageId) {
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => page.style.display = 'none');
-    document.getElementById(pageId).style.display = 'block';
-}
-
-function changeAPIKeyVisibility() {
-    var x = document.getElementById("api_key");
-    var y = document.getElementById("api_key_button");
-
-    if (x.style.display === "none") {
-        x.style.display = "inline";
-    } else {
-        x.style.display = "none";
-    }
-    
-    if (y.textContent === "Hide") {
-        y.textContent = "Show";
-    } else {
-        y.textContent = "Hide";
-    }
-}
-
+// GET JAVASCRIPT COOKIES
 function getCookie(cname) {
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
@@ -69,7 +40,14 @@ function getCookie(cname) {
     return "";
 }
 
-// PAGE 1: LANDING PAGE -> START PAGE
+// PAGE NAVIGATION
+function showPage(pageId) {
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(page => page.style.display = 'none');
+    document.getElementById(pageId).style.display = 'block';
+}
+
+// PAGE 1: LANDING PAGE -> PAGE 2: START PAGE
 function goToStartPage() {
     // Get values from landing page
     apiKey = document.getElementById("api_key").value.trim();
@@ -95,6 +73,24 @@ function goToStartPage() {
     document.getElementById("exam_desc_label").textContent = examDescription;
 
     showPage('start-page');
+}
+
+// SHOW API KEY
+function changeAPIKeyVisibility() {
+    var x = document.getElementById("api_key");
+    var y = document.getElementById("api_key_button");
+
+    if (x.style.display === "none") {
+        x.style.display = "inline";
+    } else {
+        x.style.display = "none";
+    }
+    
+    if (y.textContent === "Hide") {
+        y.textContent = "Show";
+    } else {
+        y.textContent = "Hide";
+    }
 }
 
 // POPULATE LANGUAGE CHOOSER
@@ -183,13 +179,6 @@ function goToConversationPage() {
         // Audio recording not available
         alert('Your browser does not support audio recording. Please use Google Chrome.');
     }
-}
-
-// CONVERSATION PAGE -> LANDING PAGE
-function goToLandingPage() {
-    document.getElementById("chars_input").value = '';
-    document.getElementById("exam_desc_input").value = '';
-    showPage('landing-page');
 }
 
 // SPEECH RECOGNITION SETUP
@@ -285,7 +274,7 @@ function initializeSpeechRecognition() {
     };
 }
 
-// CONVERSATION MANAGEMENT
+// START CONVERSATION 
 function startConversation() {
     conversationHistory = [];
 
@@ -314,7 +303,7 @@ function llmSpeak(prompt) {
         });
 }
 
-// SPEAKING TEXT
+// MODEL SPEAKS TEXT
 function speakText(text) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = languageCode;
@@ -342,7 +331,7 @@ function speakText(text) {
     synthesis.speak(utterance);
 }
 
-// LISTEN TO THE USER
+// MODEL LISTENS TO THE USER
 function startListening() {
     // We only start if recognition exists and the user is NOT currently speaking
     if (recognition && !isUserSpeaking) {
@@ -378,6 +367,7 @@ function endMessage() {
 }
 
 // END CONVERSATION
+// Function is called in index.html when "end conversation" button is pressed
 function endConversation() {
     if (recognition) {
         recognition.stop();
@@ -388,12 +378,13 @@ function endConversation() {
     generateScoreReport();
 }
 
-// ICON MANAGEMENT
+// SHOW SPEAKER ICON ON CONVERSATION PAGE
 function showSpeakerIcon() {
     document.getElementById('speaker-icon').style.display = 'block';
     document.getElementById('microphone-icon').style.display = 'none';
 }
 
+// SHOW MICROPHONE ICON ON CONVERSATION PAGE
 function showMicrophoneIcon() {
     document.getElementById('speaker-icon').style.display = 'none';
     document.getElementById('microphone-icon').style.display = 'block';
@@ -531,6 +522,11 @@ async function callLLMAPI(prompt) {
 // PRINT FUNCTIONS
 function printReport() {
     window.print();
+}
+
+// GO BACK TO LANDING PAGE TO RESTART
+function goToLandingPage() {
+    showPage('landing-page');
 }
 
 // Initialize: Show landing page on load

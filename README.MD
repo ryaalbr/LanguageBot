@@ -1,10 +1,10 @@
 # LanguageBot
 
-LanguageBot is a website that allows you to practice having Chinese conversations with an LLM.
+LanguageBot is a website that allows you to practice having Chinese conversations with an LLM. To use LanguageBot, go to the [https://languagebot.albrightfamily.org/][the LanguageBot website]!
 
 ## Installation
 
-You can access LanguageBot at (INSERT LINK HERE). If you want to run LanguageBot locally, first clone the github repo:
+If you want to run LanguageBot locally, first clone the github repo:
 ```
 git clone https://github.com/ryaalbr/LanguageBot.git
 ```
@@ -19,7 +19,7 @@ You can then access the web app at [http://localhost:3000/](http://localhost:300
 
 ### Landing Page
 
-On the landing page, type in the vocabulary you want to use, the description of the conversation you want to have. Click the "Submit" button once you have filled out all of the required information.
+On the landing page, type in your API key, your choice of language, the level you want to practice at, the vocabulary you want to use, the description of the conversation you want to have. Click the "Submit" button once you have filled out all of the required information.
 
 The API key will be used to access the model gemini-2.5-flash, and the description you type in will be used to prompt the model on what it should talk about.
 
@@ -29,7 +29,7 @@ This page will tell you the instructions for the conversation. Click the "Start 
 
 ### Conversation Page
 
-Pay attention to what the LLM is saying and respond back. When you are done responding to the LLM, click the "End Message" button. Your responses will be transcribed and prompted into the model, to which the model will reply.
+Pay attention to what the LLM is saying and respond back. When you are done responding to the LLM, click the "End Message" button. Your responses will be transcribed (with punctuation added by the model) and prompted into the model, to which the model will reply. 
 
 Make sure to use the required vocabulary throughout your entire conversation. Once you are done conversing, click the "End Conversation" button.
 
@@ -40,7 +40,5 @@ After your conversation, you will be given a report on your performance. This re
 ## Next Steps/Issues
 
 - Send report to email
-- Settings for language level
-- Expand to other languages (Japanese, Spanish)
-- Account setup
-- Creating exam links
+- Creating conversational exam links
+- add Safari, Firefox browser support
