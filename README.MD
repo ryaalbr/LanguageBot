@@ -4,26 +4,22 @@ LanguageBot is a website that allows you to practice having Chinese conversation
 
 ## Installation
 
-If you want to run LanguageBot locally, first clone the github repo:
+You can access LanguageBot at (INSERT LINK HERE). If you want to run LanguageBot locally, first clone the github repo:
 ```
 git clone https://github.com/ryaalbr/LanguageBot.git
 ```
-You will need a Gemini API Key in order to use LanguageBot. To get one, go to [Google AI Studio](https://aistudio.google.com/app/apikey). Then, create an .env file and add your API key in this format:
-```
-GEMINI_API_KEY=YOUR_GEMINI_KEY_HERE
-```
-After this, run the webapp locally:
+Then, run the webapp locally:
 ```
 npm install
 node index.js
 ```
-You can then access the web app at [http://localhost:3000/](http://localhost:3000/).
+You can then access the web app at [http://localhost:3000/](http://localhost:3000/). You will need a Gemini API Key in order to use LanguageBot. To get one, go to [Google AI Studio](https://aistudio.google.com/app/apikey). 
 
 ## How to Use
 
 ### Landing Page
 
-On the landing page, type in the vocabulary you want to use and the description of the conversation you want to have. Click the "Submit" button once you have filled out all of the required information.
+On the landing page, type in the vocabulary you want to use, the description of the conversation you want to have. Click the "Submit" button once you have filled out all of the required information.
 
 The API key will be used to access the model gemini-2.5-flash, and the description you type in will be used to prompt the model on what it should talk about.
 
