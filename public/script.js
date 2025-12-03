@@ -73,8 +73,7 @@ function getCookie(cname) {
 function goToStartPage() {
     // Get values from landing page
     apiKey = document.getElementById("api_key").value.trim();
-    document.cookie = "apiKey="+apiKey+";";
-    //process.env.GEMINI_API_KEY = apiKey;
+    document.cookie = "apiKey="+apiKey+"; Max-Age=" + (365 * 24 * 60 * 60) +";";
 
     const wordsInput = document.getElementById("chars_input").value.trim();
     const examDescInput = document.getElementById("exam_desc_input").value.trim();
