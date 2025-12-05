@@ -10,36 +10,39 @@
 
         <!-- PAGE 1: LANDING PAGE -->
         <div id="landing-page" class="page">
-            <h1>Welcome to LanguageBot</h1>
-
-            <p style="text-align:center; font-size: 20px;">If you are a teacher, click <a href="teacher.html">here</a></p>
+            <h1>LanguageBot</h1>
             <p id="disclaimer" style="text-align:center; font-weight: bold; font-size: 20px; color:#be0000;">Note: LanguageBot will only work in Google Chrome.</p>
+
+            <p>Welcome to LanguageBot! LanguageBot is a web app that allows you to practice your language conversational skills with a chatbot. To start using LanguageBot, fill out the following form. The answers from this form will be used in your conversation. If you are a teacher, click <a href="teacher.html">here</a>.</p>
+            
+            <p style="text-align:center; font-size: 20px;"></p>
+            
             
 
-            <label for="api_key">Insert API Key (get one from your teacher):</label>
+            <label for="api_key">API Key (required, ask your teacher):</label>
             <br>
             <button id="api_key_button" onclick="changeAPIKeyVisibility()">Show API Key</button>
             <br>
             <input type="text" id="api_key" placeholder="Insert your API key here">
             <br><br>
-            <label for="language_select">Select Language:</label>
+            <label for="language_select">Language:</label>
             <br>
             <select id="language_select">
                 </select>
             <br><br>
-            <label for="level_select">Select Level:</label>
+            <label for="level_select">Language Level (ACTFL standard):</label>
             <br>
             <select id="level_select">
                 </select>
             <br><br>
-            <label for="chars_input">Words, phrases, and grammar structures (separated by line breaks):</label>
+            <label for="chars_input">Enter words to use during the conversation, one per line (Foreign Language):</label>
             <br>
-            <textarea id="chars_input" cols="40" rows="5" placeholder="Enter vocabulary and grammar structures, one per line"></textarea>
+            <textarea id="chars_input" cols="40" rows="5" placeholder="我&#10;天气&#10;很好"></textarea>
             <br><br>
 
-            <label for="exam_desc_input">Conversation description:</label>
+            <label for="exam_desc_input">Describe what topic you want the conversation to be about (English):</label>
             <br>
-            <textarea id="exam_desc_input" cols="40" rows="5" placeholder="Describe the conversation"></textarea>
+            <textarea id="exam_desc_input" cols="40" rows="5" placeholder="I'd like to talk about the weather"></textarea>
             <br><br>
 
             <button id="submit" onclick="goToStartPage()">Submit</button>
