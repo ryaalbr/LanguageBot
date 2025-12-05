@@ -86,10 +86,10 @@ function changeAPIKeyVisibility() {
         x.style.display = "none";
     }
     
-    if (y.textContent === "Hide") {
-        y.textContent = "Show";
+    if (y.textContent === "Hide API Key") {
+        y.textContent = "Show API Key";
     } else {
-        y.textContent = "Hide";
+        y.textContent = "Hide API Key";
     }
 }
 
