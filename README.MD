@@ -1,6 +1,6 @@
 # LanguageBot
 
-LanguageBot is a website that allows you to practice having Chinese conversations with an LLM. To use LanguageBot, go to the [https://languagebot.albrightfamily.org/][the LanguageBot website]!
+LanguageBot is a website that allows you to practice having Chinese conversations with an LLM. To use LanguageBot, go to the (the LanguageBot website)[https://languagebot.albrightfamily.org/]!
 
 ## Installation
 
@@ -39,6 +39,6 @@ After your conversation, you will be given a report on your performance. This re
 
 ## Next Steps/Issues
 
+- add Safari, Firefox browser support
 - Send report to email
 - Creating conversational exam links
-- add Safari, Firefox browser support
