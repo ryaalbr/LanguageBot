@@ -255,6 +255,7 @@ function initializeSpeechRecognition() {
                         // Send user's response to LLM
                         // llmSpeak will call startListening() in its onend handler after TTS finishes
                         if (conversationOver) {
+                            console.log("Going to post-conversation page");
                             showPage('post-conversation-page');
                             generateScoreReport();
                         } else {
@@ -267,6 +268,7 @@ function initializeSpeechRecognition() {
                         conversationHistory.push({ speaker: 'User', text: currentTranscript });
                         document.getElementById('status-text').textContent = 'Processing: ' + currentTranscript;
                         if (conversationOver) {
+                            console.log("Going to post-conversation page");
                             showPage('post-conversation-page');
                             generateScoreReport();
                         } else {
@@ -280,6 +282,7 @@ function initializeSpeechRecognition() {
                 
                 // Wait briefly before restarting the mic to avoid race conditions
                 if (conversationOver) {
+                    console.log("Going to post-conversation page");
                     showPage('post-conversation-page');
                     generateScoreReport();
                 } else {
