@@ -9,6 +9,7 @@ let isUserSpeaking = false; // Flag controls both UI and flow
 let currentTranscript = '';
 let languageCode = 'zh-CN';
 let selectedLanguageName = 'Chinese';
+let conversationOver = false;
 let possibleLanguages = {
     Chinese: 'zh-CN',
     Japanese: 'ja-JP',
@@ -208,7 +209,6 @@ function initializeSpeechRecognition() {
             
             if (event.results[i].isFinal) {
                 // If it's a final result, append it to the session's overall transcript
-                // and update the global currentTranscript.
                 finalTranscript += transcript;
             } else {
                 // If it's an interim result, collect it to show the user
@@ -235,6 +235,7 @@ function initializeSpeechRecognition() {
     
     // THE CRITICAL FIX: The 'end' event fires when the speech recognition service has disconnected.
     // We run the processing logic here to ensure the service is fully stopped before proceeding.
+    
     recognition.onend = function() {
         if (isUserSpeaking) {
             // This code runs after recognition.stop() or a timeout.
@@ -253,14 +254,24 @@ function initializeSpeechRecognition() {
 
                         // Send user's response to LLM
                         // llmSpeak will call startListening() in its onend handler after TTS finishes
-                        llmSpeak(punctuatedText);
+                        if (conversationOver) {
+                            showPage('post-conversation-page');
+                            generateScoreReport();
+                        } else {
+                            llmSpeak(punctuatedText);
+                        }
                     })
                     .catch(error => {
                         console.error('Punctuation error, using original text:', error);
                         // Fall back to original text if punctuation fails
                         conversationHistory.push({ speaker: 'User', text: currentTranscript });
                         document.getElementById('status-text').textContent = 'Processing: ' + currentTranscript;
-                        llmSpeak(currentTranscript);
+                        if (conversationOver) {
+                            showPage('post-conversation-page');
+                            generateScoreReport();
+                        } else {
+                            llmSpeak(currentTranscript);
+                        }
                     });
             } else {
                 // No speech detected. Tell user and start listening again.
@@ -268,15 +279,23 @@ function initializeSpeechRecognition() {
                 document.getElementById('status-text').textContent = 'No speech detected. Please try again.';
                 
                 // Wait briefly before restarting the mic to avoid race conditions
-                setTimeout(startListening, 500); 
+                if (conversationOver) {
+                    showPage('post-conversation-page');
+                    generateScoreReport();
+                } else {
+                    setTimeout(startListening, 500); 
+                }
             }
         }
     };
 }
 
+// TODO: when we press "end conversation", set onend() to nill
+
 // START CONVERSATION 
 function startConversation() {
     conversationHistory = [];
+    conversationOver = false;
 
     llmSpeak();
 }
@@ -369,13 +388,12 @@ function endMessage() {
 // END CONVERSATION
 // Function is called in index.html when "end conversation" button is pressed
 function endConversation() {
+    conversationOver = true;
     if (recognition) {
         recognition.stop();
+        console.log("Speech recognition has stopped.");
     }
     synthesis.cancel();
-
-    showPage('post-conversation-page');
-    generateScoreReport();
 }
 
 // SHOW SPEAKER ICON ON CONVERSATION PAGE
@@ -397,6 +415,7 @@ function generateScoreReport() {
     transcriptDiv.innerHTML = '';
 
     // Highlight required words/structures in user messages
+    
     conversationHistory.forEach(entry => {
         const p = document.createElement('p');
         p.className = entry.speaker === 'User' ? 'user-message' : 'llm-message';
